@@ -5,6 +5,7 @@ import sys
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
+from crewai.memory import EntityMemory
 from langchain_google_genai import ChatGoogleGenerativeAI
 import google.generativeai as genai
 
@@ -76,6 +77,7 @@ def create_data_analyst_agent() -> Agent:
         backstory=AGENT_ROLES["data_analyst"]["backstory"],
         verbose=True,
         allow_delegation=True,
+        memory=EntityMemory(),
         tools=[
             sql_tool.run,
             schema_tool.get_tables,
@@ -99,6 +101,7 @@ def create_business_analyst_agent() -> Agent:
         backstory=AGENT_ROLES["business_analyst"]["backstory"],
         verbose=True,
         allow_delegation=True,
+        memory=EntityMemory(),
         tools=[
             sql_tool.run,
             summarizer_tool.summarize,
@@ -150,7 +153,8 @@ def create_sales_analysis_task(
     return Task(
         description=task_description,
         expected_output="A comprehensive analysis of the sales data with findings and evidence.",
-        agent=create_data_analyst_agent()
+        agent=create_data_analyst_agent(),
+        context=context or {}
     )
 
 
@@ -206,7 +210,8 @@ def create_crew(user_query: str, context: Optional[Dict[str, Any]] = None) -> Cr
         ],
         tasks=[analysis_task, interpretation_task],
         verbose=2,
-        process=Process.sequential
+        process=Process.sequential,
+        memory=EntityMemory()
     )
     
     return crew 
